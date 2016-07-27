@@ -1,0 +1,60 @@
+heat_template_version: 2015-10-15
+description: template to deploy 2 hosts on a created private network
+
+parameters:
+  key_name:
+    type: string
+    label: Key Name
+    description: Name of key-pair to be used for compute instance
+    constraints:
+      - custom_constraint: nova.keypair
+  mysql_inst_type:
+    type: string
+    label: Instance Type
+    default: m1.small
+    constraints:
+      - custom_constraint: nova.flavor
+  hap_inst_type:
+    type: string
+    label: Instance Type
+    default: m1.small
+    constraints:
+      - custom_constraint: nova.flavor
+  public_network:
+    type: string
+    label: Public Network Name
+    default: internal_floating_net
+
+resources:
+
+  private_network:
+    type: lib/private_network.yaml
+    properties:
+     public_network: { get_param: public_network }
+
+  host1:
+#    type: rjj::mysql		#if using custom type declarations, be sure to include them in an environment file
+    type: lib/mysql.yaml
+    properties:
+      network: { get_attr: [private_network, name] }
+      instance_type: { get_param: mysql_inst_type }
+      key_name: { get_param: key_name } 
+
+  floating_ip1:
+    type: lib/floating_ip.yaml
+    properties:
+      port: { get_attr: [host1, port] }
+      public_network: { get_param: public_network }
+
+  host2:
+    type: lib/mysql.yaml
+    properties:
+      network: { get_attr: [private_network, name] }
+      instance_type: { get_param: mysql_inst_type }
+      key_name: { get_param: key_name } 
+      
+  floating_ip2:
+    type: lib/floating_ip.yaml
+    properties:
+      port: { get_attr: [host2, port] }
+      public_network: { get_param: public_network }
