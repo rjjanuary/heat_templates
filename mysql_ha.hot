@@ -1,0 +1,55 @@
+heat_template_version: 2015-10-15
+description: Simple template to deploy a single compute instance
+
+parameters:
+  key_name:
+    type: string
+    label: Key Name
+    description: Name of key-pair to be used for compute instance
+    constraints:
+      - custom_constraint: nova.keypair
+  mysql_inst_type:
+    type: string
+    label: Instance Type
+    default: m1.small
+    constraints:
+      - custom_constraint: nova.flavor
+
+  hap_inst_type:
+    type: string
+    label: Instance Type
+    default: m1.small
+    constraints:
+      - custom_constraint: nova.flavor
+
+resources:
+  mysql1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: rj-private
+      security_groups: 
+        - "default"
+        - "SG_Linux"
+      fixed_ips:
+        - subnet_id: "rj-private-subnet"
+
+  mysql_fip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: "internal_floating_net"
+      port_id: { get_resource: mysql1_port }
+
+  mysql1_server:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: key_name }
+      image: CentOS-7-x86_64-GenericCloud-1606
+      flavor: { get_param: mysql_inst_type }
+      networks:
+        - network: rj-private
+
+  floating_ip_assoc:
+    type: OS::Neutron::FloatingIPAssociation
+    properties:
+      floatingip_id: { get_resource: mysql_fip }
+      port_id: { get_resource: mysql1_port }

@@ -1,0 +1,3 @@
+resource_registry:
+  rjj::mysql: lib/mysql.yaml
+  rjj::floating_ip: lib/floating_ip.yaml
