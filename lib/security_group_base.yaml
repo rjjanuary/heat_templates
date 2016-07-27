@@ -1,0 +1,9 @@
+security_group_base:
+  type: OS::Neutron::SecurityGroup
+  properties:
+    name: security_group_base
+    rules:
+      - protocol: icmp
+      - protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
