@@ -1,0 +1,2 @@
+heat_template_version: 2014-10-16
+description: Install Percona Server onto a CentOS host

@@ -1,0 +1,50 @@
+heat_template_version: 2014-10-16
+description: template to deploy 2 hosts on a created private network
+
+parameters:
+  key_name:
+    type: string
+    label: Key Name
+    description: Name of key-pair to be used for compute instance
+    constraints:
+      - custom_constraint: nova.keypair
+  mysql_inst_type:
+    type: string
+    label: Instance Type
+    default: m1.small
+    constraints:
+      - custom_constraint: nova.flavor
+  hap_inst_type:
+    type: string
+    label: Instance Type
+    default: m1.small
+    constraints:
+      - custom_constraint: nova.flavor
+  public_network:
+    type: string
+    label: Public Network Name
+    default: internal_floating_net
+
+resources:
+ 
+  security_group_host:
+    type: lib/security_group_base.yaml
+   
+  private_network:
+    type: lib/private_network.yaml
+    properties:
+     public_network: { get_param: public_network }
+
+  host1:
+    type: lib/host.yaml
+    properties:
+      network: { get_attr: [private_network, name] }
+      instance_type: { get_param: mysql_inst_type }
+      key_name: { get_param: key_name } 
+      security_group: { get_attr: [security_group_host, security_group] }
+
+  floating_ip1:
+    type: lib/floating_ip.yaml
+    properties:
+      port: { get_attr: [host1, port] }
+      public_network: { get_param: public_network }

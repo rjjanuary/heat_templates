@@ -1,7 +1,7 @@
 heat_template_version: 2014-10-16
 
 resources:
-  security_group:
+  security_group_base:
     type: OS::Neutron::SecurityGroup
     properties:
       name: security_group_mysql
@@ -10,7 +10,10 @@ resources:
         - protocol: tcp
           port_range_min: 22
           port_range_max: 22
+        - protocol: tcp
+          port_range_min: 3306
+          port_range_max: 3306
 outputs:
   security_group:
-    description: Base Linux Security Group
+    description: MySQL security Group
     value: { get_resource: security_group }
