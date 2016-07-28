@@ -1,4 +1,5 @@
-heat_template_version: 2015-10-15
+heat_template_version: 2014-10-16
+#heat_template_version: 2015-10-15
 
 description: Template that assigns a floating IP address to a server.
 

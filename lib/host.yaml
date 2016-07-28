@@ -21,6 +21,9 @@ parameters:
     default: rj-private
     constraints:
       - custom_constraint: neutron.network
+  security_group:
+    type: string
+    label: security group for server port
 
 resources:
   wait_condition:
@@ -42,55 +45,15 @@ resources:
         - name: ansible 
           gecos: ansible
           primary-group: wheel
-          #groups: users
-          #ssh-import-id: "Ryan January"
           passwd: $6$9Ixdwpdl$01BgZDx4QHaMUrfKPxhnhl4xRccc.Sbv8.443MTIBgAnFuNi0pLky8be4TXfRRqJF/m57XyUpai8hOLEna80k1
           lock_passwd: false
           sudo: ALL=(ALL) NOPASSWD:ALL
-          ssh-keys:
-            rsa_private: |
-              -----BEGIN RSA PRIVATE KEY-----
-              MIIEpQIBAAKCAQEA2CMfHGh+X/uoHUq33nGGpqaFuNqbWTq+FPaVHKO0LhcXlBcz
-              1OCmerZi4lNHDPECmL4ta7QkOmb0JfM4XSmZdsVO6I54yx9aR2/Ovif+6n4JR3yV
-              E0OpkY9m8+nrSgLF2LbAwALzJ4F1BZ0QFms5rNgyxToku8Jwp81gOST34WlbgOZr
-              A6juox3RFHeZPTlShyqH+Ntr1BJErUGu7PD5jsoD+EE+yh/6lKkE+aImkDfD5Jsb
-              twabZ8eCzBD6NsYEDNtCOC8LB0f0kgdsGDrI1Ms7a9+mxSKIHrkP75/4O8dRiXvy
-              MwAwaw8y9uY9elOivSrENcS5i5NFwHllf/26QwIDAQABAoIBAQDNhxheez8xJq2G
-              rTaLYIkaj985GSgAgcufQ5wnz8PW0D6rpCS1maq1phoB/g7iT4yYkr++W17X6m7g
-              Z5iBfr1gI+AVZOWYwgenRrriOEY/1foc8GsSFpV4xVSxPQ9xIZHhsmc4L5XpS0Fs
-              RR63Mt91bWFaCyBDK3LVHocR0AWnYjexX9/6O6MfseNl6kZjlAN4JmoyE5lmlVeH
-              HHQ0gGWkoC1VNENYApWVPPqYgKd0qsllmeYcf0Sit/aB3r4xVXb+aB5mJcNNw3T7
-              vEIeNWTMzHjbdUH8vXtWcJm42vLy9Qquez+HooDie/2X4GwALk7NvlDtTwWPvHY6
-              +W366YMBAoGBAP9a9pk4aSdF6pgqqkYCO7kGSFgLmsqJh/OXppjp3NU+/ANWnKdz
-              jRECA+SWPUXdpDdgxEPyUbNwxQ9xYSFjDC9nyQzaePDG3zP8qYj1e1rCoLMgTR+b
-              6LwOTWbgzkZB/hQTWvknHadpq9CIxF2UMUmmP/02hkx2xZO4KffFtRUJAoGBANiu
-              z71xfIURAP7Yhp6xHzjWWf6p5KIakOWjW+CjoGx1HN1hbDq/HlNbwP6mDxs8p+6C
-              gt0Q3DSG1JooUdwMGmmgzXkR+oyqMvpLKGVLZp9r8RC1VQUESlOjqXEFZrYw1MBv
-              /fMNt4QON61GghSbsNg37EtiwIzlvGKbE4QfRdPrAoGBAPfM4C2ETpbsBGIyVRan
-              KCm/bQj0CfyuRh4fdm5B1Cmke48Jx++/9I8is4BqQ3+/PJL49r0xNBO8RZ9c2XM6
-              2SJPxw0QHfkaJJQghqz/+/rxkF0D5ZPdCpckEfzZ/5Kyi8wTlF7glKhXpYIylsxw
-              +PuNt98TwHQHdmiJeUCWvclxAoGAYanxQn77U/LFExi/HJnS68hZidpDjfkRZB/M
-              UqUNsrTajMHTiWsJHSNXCrAIUQt22Z8DouZtilNXUiBoPRlLcl6jHjXHS02Papcj
-              nvxsReDeJ9zDdF5precvgRyhHe9GhXI08S82jxPlbnlAOk+uVtZl79iT1y3ZSkyB
-              cGS0EX8CgYEAgonYvAbWmdKoOTUNTxPDwDzXuvyNJFAkQ01y8nLJjTDeYr9LHGJG
-              BGTvVGXxiNgwJOel5yqyL6Gwrb3W72om8LNKSBbRawcTOCPSXWL3eV/v6JnEufT/
-              BYfDFl6ZmuQxpgNMXcyBIzuv/vDGvxDcEsyx3MTWLLQo3XoGsOGQeOg=
-              -----END RSA PRIVATE KEY-----
-#        write_files:
-#        - path: /tmp/file
-#          content: {get_param: file_content}
         yum_repos:
           # The name of the repository
           nic-percona:
-            # Any repository configuration options
-            # See: man yum.conf
-            #
-            # This one is required!
-            baseurl: http://10.162.1.144/pub/repo/percona/7/x86_64/  ##http://download.fedoraproject.org/pub/epel/testing/7/$basearch
-            #enabled: false
-            #failovermethod: priority
+            baseurl: http://10.162.1.144/pub/repo/percona/7/x86_64/
+            enabled: true
             gpgcheck: false
-            #gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL
             name: NIC mirror of Percona
 
   boot_script:
@@ -113,22 +76,21 @@ resources:
       - config: {get_resource: boot_config}
       - config: {get_resource: boot_script}
 
-  mysql_port:
+  host_port:
     type: OS::Neutron::Port
     properties:
       network: { get_param: network }
       security_groups: 
-        - "default"
-        - "SG_Linux"
+        - { get_param : security_group }
 
-  mysql_server:
+  host_server:
     type: OS::Nova::Server
     properties:
       key_name: { get_param: key_name }
       image: CentOS-7-x86_64-GenericCloud-1606
       flavor: { get_param: instance_type }
       networks:
-        - port: { get_resource: mysql_port }
+        - port: { get_resource: host_port }
       #V test of new init
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: server_init} 
@@ -144,10 +106,10 @@ resources:
 outputs:
   inst_name:
     description: Name of the instance
-    value: { get_attr: [mysql_server, name] }
+    value: { get_attr: [host_server, name] }
   instance_ip:
     description: IP address of the instance
-    value: { get_attr: [mysql_server, first_address] }
+    value: { get_attr: [host_server, first_address] }
   port:
-    description: The network port of the MySQL instance.
-    value: { get_resource: mysql_port }
+    description: The network assigned to this host.
+    value: { get_resource: host_port }

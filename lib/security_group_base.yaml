@@ -1,9 +1,16 @@
-security_group_base:
-  type: OS::Neutron::SecurityGroup
-  properties:
-    name: security_group_base
-    rules:
-      - protocol: icmp
-      - protocol: tcp
-        port_range_min: 22
-        port_range_max: 22
+heat_template_version: 2014-10-16
+
+resources:
+  security_group_base:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: security_group_base
+      rules:
+        - protocol: icmp
+        - protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+outputs:
+  security_group:
+    description: The security group created by the template
+    value: { get_resource: security_group_base }
