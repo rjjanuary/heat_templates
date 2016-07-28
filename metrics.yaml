@@ -27,7 +27,7 @@ parameters:
 
 resources:
  
-  security_group_host:
+  security_group_base:
     type: lib/security_group_base.yaml
   security_group_metrics:
     type: lib/security_group_metrics.yaml
@@ -43,7 +43,7 @@ resources:
       network: { get_attr: [private_network, name] }
       instance_type: { get_param: metric_inst_type }
       key_name: { get_param: key_name } 
-      security_group: { get_attr: [security_group_host, security_group] }
+      security_group_list: [ { get_attr: [security_group_metrics, security_group] }, { get_attr: [security_group_base, security_group] } ]
 
   floating_ip1:
     type: lib/floating_ip.yaml

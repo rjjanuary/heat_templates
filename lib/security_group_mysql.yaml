@@ -1,7 +1,7 @@
 heat_template_version: 2014-10-16
 
 resources:
-  security_group_base:
+  sg_mysql:
     type: OS::Neutron::SecurityGroup
     properties:
       name: security_group_mysql
@@ -15,5 +15,5 @@ resources:
           port_range_max: 3306
 outputs:
   security_group:
-    description: MySQL security Group
-    value: { get_resource: security_group }
+    description: MySQL security group
+    value: { get_resource: sg_mysql }

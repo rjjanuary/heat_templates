@@ -1,5 +1,4 @@
 heat_template_version: 2014-10-16
-#heat_template_version: 2015-10-15
 description: Simple template to deploy a single compute instance
 
 parameters:
@@ -21,9 +20,9 @@ parameters:
     default: rj-private
     constraints:
       - custom_constraint: neutron.network
-  security_group:
-    type: string
-    label: security group for server port
+  security_group_list:
+    type: comma_delimited_list
+    label: security group list for server port
 
 resources:
   wait_condition:
@@ -77,6 +76,10 @@ resources:
             #!/bin/bash -ex
             echo "10.162.0.19   region1.cloud.egov.com" >> /etc/hosts
             yum -y install https://grafanarel.s3.amazonaws.com/builds/grafana-3.1.0-1468321182.x86_64.rpm
+            systemctl start grafana-server
+            systemctl start influxdb
+            systemctl enable grafana-server
+            systemctl enable influxdb
             wc_notify --data-binary '{"status": "SUCCESS"}'
 
   server_init:
@@ -91,7 +94,7 @@ resources:
     properties:
       network: { get_param: network }
       security_groups: 
-        - { get_param : security_group }
+        { get_param : security_group_list }
 
   host_server:
     type: OS::Nova::Server

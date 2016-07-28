@@ -1,10 +1,10 @@
 heat_template_version: 2014-10-16
 
 resources:
-  security_group:
+  sg_base:
     type: OS::Neutron::SecurityGroup
     properties:
-      name: security_group_mysql
+      name: sg_base
       rules:
         - protocol: icmp
         - protocol: tcp
@@ -13,4 +13,4 @@ resources:
 outputs:
   security_group:
     description: Base Linux Security Group
-    value: { get_resource: security_group }
+    value: { get_resource: sg_base }
