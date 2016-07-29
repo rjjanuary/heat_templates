@@ -1,2 +1,112 @@
 heat_template_version: 2014-10-16
-description: Install Percona Server onto a CentOS host
+description: Template to deploy a Percona 5.7 Server
+
+parameters:
+  key_name:
+    type: string
+    label: Key Name
+    description: Name of key-pair to be used for compute instance
+    constraints:
+      - custom_constraint: nova.keypair
+  instance_type:
+    type: string
+    label: Instance Type
+    default: m1.small
+    constraints:
+      - custom_constraint: nova.flavor
+  network:
+    type: string
+    label: Network where instance will reside
+    default: rj-private
+    constraints:
+      - custom_constraint: neutron.network
+  security_group_list:
+    type: comma_delimited_list
+    label: security group list for server port
+
+resources:
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: { get_resource: wait_handle }
+      count: 1
+      timeout: 600
+
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
+
+  boot_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        users:
+        - default
+        - name: ansible 
+          gecos: ansible
+          primary-group: wheel
+          passwd: $6$9Ixdwpdl$01BgZDx4QHaMUrfKPxhnhl4xRccc.Sbv8.443MTIBgAnFuNi0pLky8be4TXfRRqJF/m57XyUpai8hOLEna80k1
+          lock_passwd: false
+          sudo: ALL=(ALL) NOPASSWD:ALL
+        yum_repos:                                                                       
+          nic-percona:                                                                   
+            baseurl: http://10.162.1.144/pub/repo/percona/7/x86_64/                      
+            enabled: true                                                                
+            gpgcheck: false                                                              
+            name: NIC mirror of Percona                                                  
+          influxdb:                                                                      
+            baseurl: https://repos.influxdata.com/centos/\$releasever/\$basearch/stable  
+            enabled: true                                                                
+            gpgcheck: true                                                               
+            gpgkey: https://repos.influxdata.com/influxdb.key                            
+            name: NIC mirror of Percona                                                  
+        packages:                                                                        
+        - Percona-Server-server-57
+
+  boot_script:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: ungrouped
+      config: 
+        str_replace:
+          params:
+            wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
+          template: |
+            #!/bin/bash -ex
+            echo "10.162.0.19   region1.cloud.egov.com" >> /etc/hosts
+            wc_notify --data-binary '{"status": "SUCCESS"}'
+
+  server_init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: boot_config}
+      - config: {get_resource: boot_script}
+
+  host_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: network }
+      security_groups: 
+        { get_param : security_group_list }
+
+  host_server:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: key_name }
+      image: CentOS-7-x86_64-GenericCloud-1606
+      flavor: { get_param: instance_type }
+      networks:
+        - port: { get_resource: host_port }
+      user_data_format: SOFTWARE_CONFIG
+      user_data: {get_resource: server_init} 
+
+outputs:
+  inst_name:
+    description: Name of the instance
+    value: { get_attr: [host_server, name] }
+  instance_ip:
+    description: IP address of the instance
+    value: { get_attr: [host_server, first_address] }
+  port:
+    description: The network assigned to this host.
+    value: { get_resource: host_port }

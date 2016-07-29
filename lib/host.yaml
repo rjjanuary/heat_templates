@@ -1,5 +1,4 @@
 heat_template_version: 2014-10-16
-#heat_template_version: 2015-10-15
 description: Simple template to deploy a single compute instance
 
 parameters:
@@ -84,7 +83,6 @@ resources:
       flavor: { get_param: instance_type }
       networks:
         - port: { get_resource: host_port }
-      #V test of new init
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: server_init} 
 

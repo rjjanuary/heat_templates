@@ -23,7 +23,7 @@ parameters:
   security_group_list:
     type: comma_delimited_list
     label: security group list for server port
-
+    default: [ SG_Linux ]
 resources:
   wait_condition:
     type: OS::Heat::WaitCondition
@@ -104,17 +104,8 @@ resources:
       flavor: { get_param: instance_type }
       networks:
         - port: { get_resource: host_port }
-      #V test of new init
       user_data_format: SOFTWARE_CONFIG
       user_data: {get_resource: server_init} 
-#      user_data:   <-- start of old init
-#        str_replace:
-#          params:
-#            wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
-#          template: |
-#            #!/bin/bash -ex
-#            echo "10.162.0.19   region1.cloud.egov.com" >> /etc/hosts
-#            wc_notify --data-binary '{"status": "SUCCESS"}'
       
 outputs:
   inst_name:
