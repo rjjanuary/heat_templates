@@ -1,0 +1,25 @@
+heat_template_version: 2014-10-16
+
+resources:
+  sg_mysql:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: security_group_mysql
+      rules:
+        - protocol: icmp
+        - protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - protocol: tcp
+          port_range_min: 80
+          port_range_max: 80
+        - protocol: tcp
+          port_range_min: 3306
+          port_range_max: 3306
+        - protocol: tcp
+          port_range_min: 5000
+          port_range_max: 5000
+outputs:
+  security_group:
+    description: MySQL security group
+    value: { get_resource: sg_mysql }

@@ -59,6 +59,7 @@ resources:
           template: |
             #!/bin/bash -ex
             echo "10.162.0.19   region1.cloud.egov.com" >> /etc/hosts
+            setenforce 0
             wc_notify --data-binary '{"status": "SUCCESS"}'
 
   server_init:

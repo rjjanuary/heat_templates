@@ -30,7 +30,7 @@ resources:
     properties:
       handle: { get_resource: wait_handle }
       count: 1
-      timeout: 400
+      timeout: 500
 
   wait_handle:
     type: OS::Heat::WaitConditionHandle
@@ -79,10 +79,30 @@ resources:
             echo $(whoami) >> /tmp/cloud-init-user
             setenforce 0
             echo "10.162.0.19   region1.cloud.egov.com" >> /etc/hosts
+            # mysql config
             mysqld --user=root --initialize-insecure=TRUE
             chown -R mysql:mysql /var/lib/mysql
             systemctl enable mysqld.service
-            systemctl enable httpd.service 
+            systemctl start mysqld.service
+            # apache setup
+            mkdir -p /var/www/thermos
+            chown -R apache:apache /var/www/thermos
+            chmod -R 755 /var/www
+            mkdir -p /etc/httpd/sites-available
+            mkdir -p /etc/httpd/sites-enabled
+            echo "IncludeOptional sites-enabled/*.conf" >> /etc/httpd/conf/httpd.conf
+            cat <<EOF>/etc/httpd/sites-available/thermos.conf
+            <VirtualHost *:80>
+              ServerName www.example.com
+              DocumentRoot /var/www/thermos
+              ErrorLog /var/log/httpd/thermos_error.log
+              CustomLog /var/log/httpd/thermos_requests.log combined
+            </VirtualHost>
+            EOF
+            ln -s /etc/httpd/sites-available/thermos.conf /etc/httpd/sites-enabled/thermos.conf
+            git clone https://github.com/rjjanuary/thermos.git /var/www/thermos
+            systemctl enable httpd.service
+            systemctl start httpd.service
             wc_notify --data-binary '{"status": "SUCCESS"}'
 
   server_init:

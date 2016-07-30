@@ -75,6 +75,7 @@ resources:
           template: |
             #!/bin/bash -ex
             echo "10.162.0.19   region1.cloud.egov.com" >> /etc/hosts
+            setenforce 0
             yum -y install https://grafanarel.s3.amazonaws.com/builds/grafana-3.1.0-1468321182.x86_64.rpm
             systemctl start grafana-server
             systemctl start influxdb
