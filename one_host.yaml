@@ -32,7 +32,7 @@ resources:
      public_network: { get_param: public_network }
 
   host1:
-    type: lib/app_host.yaml
+    type: lib/mysql-56.yaml
     properties:
       network: { get_attr: [private_network, name] }
       instance_type: { get_param: mysql_inst_type }

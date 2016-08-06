@@ -47,24 +47,34 @@ resources:
           passwd: $6$9Ixdwpdl$01BgZDx4QHaMUrfKPxhnhl4xRccc.Sbv8.443MTIBgAnFuNi0pLky8be4TXfRRqJF/m57XyUpai8hOLEna80k1
           lock_passwd: false
           sudo: ALL=(ALL) NOPASSWD:ALL
-        yum_repos:                                                                       
-          nic-percona:                                                                   
-            baseurl: http://10.162.1.144/pub/repo/percona/7/x86_64/                      
-            enabled: true                                                                
-            gpgcheck: false                                                              
-            name: NIC mirror of Percona                                                  
-          influxdb:                                                                      
+        yum_repos:
+          nic-percona:
+            baseurl: http://10.162.1.144/pub/repo/percona/7/x86_64/
+            enabled: true
+            gpgcheck: false
+            name: NIC mirror of Percona 
+          nic-epel:
+            baseurl: http://10.162.1.144/pub/repo/epel/7/x86_64/
+            enabled: true 
+            gpgcheck: false
+            name: NIC mirror of epel
+          influxdb:
             baseurl: https://repos.influxdata.com/centos/\$releasever/\$basearch/stable  
-            enabled: true                                                                
-            gpgcheck: true                                                               
-            gpgkey: https://repos.influxdata.com/influxdb.key                            
-            name: NIC mirror of Percona                                                  
-        packages:                                                                        
+            enabled: true
+            gpgcheck: true
+            gpgkey: https://repos.influxdata.com/influxdb.key
+            name: NIC mirror of Percona
+        packages:
         - Percona-Server-server-57
         - httpd
         - mod_wsgi
         - telegraf
         - git
+        - gcc
+        - python-devel
+        - python-pip
+        - nc
+        - psmisc
 
   boot_script:
     type: OS::Heat::SoftwareConfig
@@ -84,6 +94,15 @@ resources:
             chown -R mysql:mysql /var/lib/mysql
             systemctl enable mysqld.service
             systemctl start mysqld.service
+            mysql -u root -h localhost <<EOF
+             create user thermos identified by 'thermos';
+             create database thermos;
+             grant all on thermos.* to thermos;
+             create user telegraf identified by 'telegraf';
+             grant select on performance_schema.* to telegraf;
+             grant select on thermos.* to telegraf;
+            EOF
+
             # apache setup
             mkdir -p /var/www/thermos
             chown -R apache:apache /var/www/thermos
@@ -93,16 +112,33 @@ resources:
             echo "IncludeOptional sites-enabled/*.conf" >> /etc/httpd/conf/httpd.conf
             cat <<EOF>/etc/httpd/sites-available/thermos.conf
             <VirtualHost *:80>
-              ServerName www.example.com
+              WSGIScriptAlias / /var/www/thermos/thermos.wsgi
               DocumentRoot /var/www/thermos
               ErrorLog /var/log/httpd/thermos_error.log
               CustomLog /var/log/httpd/thermos_requests.log combined
             </VirtualHost>
             EOF
             ln -s /etc/httpd/sites-available/thermos.conf /etc/httpd/sites-enabled/thermos.conf
-            git clone https://github.com/rjjanuary/thermos.git /var/www/thermos
             systemctl enable httpd.service
             systemctl start httpd.service
+
+            # app setup
+            git clone https://github.com/rjjanuary/thermos.git /var/www/thermos
+            #cd /var/www/thermos
+            #git checkout thermos_v2
+            #cd -
+            pip install -r /var/www/thermos/requirements.txt
+            export THERMOS_ENV=mysql
+            python /var/www/thermos/manage.py db init
+            python /var/www/thermos/manage.py db migrate
+            python /var/www/thermos/manage.py db upgrade
+            python /var/www/thermos/manage.py insert_data 
+            apachectl restart
+            # telegraf setup
+            cp /var/www/thermos/external_config/telegraf.conf /etc/telegraf/telegraf.conf
+            systemctl enable telegraf.service
+            #systemctl start telegraf.service
+            # call back to openstack to end wait event
             wc_notify --data-binary '{"status": "SUCCESS"}'
 
   server_init:

@@ -53,16 +53,25 @@ resources:
             enabled: true
             gpgcheck: false
             name: NIC mirror of Percona
-        yum_repos:
+          nic-epel:
+            baseurl: http://10.162.1.144/pub/repo/epel/7/x86_64/
+            enabled: true
+            gpgcheck: false
+            name: NIC mirror of epel
           influxdb:
             baseurl: https://repos.influxdata.com/centos/\$releasever/\$basearch/stable 
             enabled: true
             gpgcheck: true
             gpgkey: https://repos.influxdata.com/influxdb.key
-            name: NIC mirror of Percona
+            name: InfluxDB repository
         packages:
           - influxdb
           - telegraf
+          - nc
+          - httpress
+          - tcpdump
+          - wget
+          - psmisc
 
   boot_script:
     type: OS::Heat::SoftwareConfig
@@ -76,6 +85,8 @@ resources:
             #!/bin/bash -ex
             echo "10.162.0.19   region1.cloud.egov.com" >> /etc/hosts
             setenforce 0
+            mv /etc/telegraf/telegraf.conf /etc/telegraf/telegraf.orig
+            grep -vE '^\s*#|^\s*$' /etc/telegraf/telegraf.orig > /etc/telegraf/telegraf.conf
             yum -y install https://grafanarel.s3.amazonaws.com/builds/grafana-3.1.0-1468321182.x86_64.rpm
             systemctl start grafana-server
             systemctl start influxdb

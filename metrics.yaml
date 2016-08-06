@@ -8,7 +8,7 @@ parameters:
     description: Name of key-pair to be used for compute instance
     constraints:
       - custom_constraint: nova.keypair
-  mysql_inst_type:
+  app_inst_type:
     type: string
     label: Instance Type
     default: m1.small
@@ -31,8 +31,8 @@ resources:
     type: lib/security_group_base.yaml
   security_group_metrics:
     type: lib/security_group_metrics.yaml
-  security_group_mysql:
-    type: lib/security_group_mysql.yaml
+  security_group_app:
+    type: lib/security_group_app.yaml
    
   private_network:
     type: lib/private_network.yaml
@@ -54,12 +54,12 @@ resources:
       public_network: { get_param: public_network }
 
   app:
-    type: lib/mysql.yaml
+    type: lib/app_host.yaml
     properties:
       network: { get_attr: [private_network, name] }
-      instance_type: { get_param: metric_inst_type }
+      instance_type: { get_param: app_inst_type }
       key_name: { get_param: key_name } 
-      security_group_list: [ { get_attr: [security_group_mysql, security_group] }, { get_attr: [security_group_base, security_group] } ]
+      security_group_list: [ { get_attr: [security_group_app, security_group] }, { get_attr: [security_group_base, security_group] } ]
 
   floating_ip2:
     type: lib/floating_ip.yaml
